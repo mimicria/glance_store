@@ -1,0 +1,36 @@
+name: Trivy SBOM
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+jobs:
+  update-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install packages & Trivy
+        run: |
+          apt-get update
+          apt-get install -y wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | tee -a /etc/apt/sources.list.d/trivy.list
+          apt-get update
+          apt-get install trivy
+        
+      - name: Checkout repository
+        uses: actions/checkout@v4 
+
+      - name: Trivy
+        run: |
+          trivy fs --detection-priority comprehensive --format cyclonedx --output /tmp/sbom.json "$GITHUB_WORKSPACE"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-sbom
+          path: /tmp/sbom.json
+          retention-days: 30 
+      
+
+    
