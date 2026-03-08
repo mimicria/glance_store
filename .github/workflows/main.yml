@@ -16,8 +16,7 @@ jobs:
         run: |
           apt-get update
           apt-get install -y wget apt-transport-https gnupg lsb-release
-          wget -qO -P /bin/ https://github.com/cdxgen/cdxgen/releases/download/v12.1.1/cdxgen-linux-amd64
-          mv /bin/cdxgen-linux-amd64 /bin/cdxgen
+          wget -q https://github.com/cdxgen/cdxgen/releases/download/v12.1.1/cdxgen-linux-amd64 -O /bin/cdxgen
           chmod +x /bin/cdxgen
         
       - name: Checkout repository
