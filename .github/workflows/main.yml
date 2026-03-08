@@ -1,4 +1,4 @@
-name: Trivy SBOM
+name: SBOM
 
 on:
   workflow_dispatch:
@@ -6,13 +6,41 @@ on:
     branches:
       - master
 jobs:
-  update-image:
+  cdxgen:
     runs-on: ubuntu-latest
     container:
       image: ubuntu:24.04 
       
     steps:
-      - name: Install packages & Trivy
+      - name: Install packages & cdxgen
+        run: |
+          apt-get update
+          apt-get install -y wget apt-transport-https gnupg lsb-release
+          wget -qO wget -P /bin/ https://github.com/cdxgen/cdxgen/releases/download/v12.1.1/cdxgen-linux-amd64
+          mv /bin/cdxgen-linux-amd64 /bin/cdxgen
+          chmod +x /bin/cdxgen
+        
+      - name: Checkout repository
+        uses: actions/checkout@v4 
+
+      - name: Cdxgen
+        run: |
+          cdxgen -o /tmp/cdxgen.json --no-recurse "$GITHUB_WORKSPACE"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cdxgen-sbom
+          path: /tmp/cdxgen.json
+          retention-days: 30 
+      
+  trivy:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:24.04 
+      
+    steps:
+      - name: Install packages & cdxgen
         run: |
           apt-get update
           apt-get install -y wget apt-transport-https gnupg lsb-release
@@ -35,5 +63,7 @@ jobs:
           path: /tmp/sbom.json
           retention-days: 30 
       
+
+    
 
     
