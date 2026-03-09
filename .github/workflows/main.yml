@@ -1,4 +1,4 @@
-name: SBOM
+name: Check repo
 
 on:
   workflow_dispatch:
@@ -60,6 +60,34 @@ jobs:
         with:
           name: trivy-sbom
           path: /tmp/sbom.json
+          retention-days: 30 
+      
+  gitleaks:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:24.04 
+      
+    steps:
+      - name: Install packages & gitleaks
+        run: |
+          apt-get update
+          apt-get install -y wget apt-transport-https gnupg lsb-release tar
+          wget -q https://github.com/gitleaks/gitleaks/releases/download/v8.29.0/gitleaks_8.29.0_linux_x64.tar.gz
+          tar -xf gitleaks_8.29.0_linux_x64.tar.gz
+          mv gitleaks /bin/        
+          
+      - name: Checkout repository
+        uses: actions/checkout@v4 
+
+      - name: Gitleaks
+        run: |
+          gitleaks dir -r /tmp/gitleaks.txt "$GITHUB_WORKSPACE"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-result
+          path: /tmp/gitleaks.txt
           retention-days: 30 
       
 
