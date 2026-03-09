@@ -81,13 +81,13 @@ jobs:
 
       - name: Gitleaks
         run: |
-          gitleaks dir -r /tmp/gitleaks.txt "$GITHUB_WORKSPACE"
+          gitleaks dir -f sarif -r /tmp/gitleaks.json "$GITHUB_WORKSPACE"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gitleaks-result
-          path: /tmp/gitleaks.txt
+          name: gitleaks-sarif
+          path: /tmp/gitleaks.json
           retention-days: 30 
       
 
