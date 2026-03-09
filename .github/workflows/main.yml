@@ -7,6 +7,7 @@ on:
       - master
 jobs:
   cdxgen:
+    if: false
     runs-on: ubuntu-latest
     container:
       image: ubuntu:24.04 
@@ -17,9 +18,9 @@ jobs:
           apt-get update
           apt-get install -y wget apt-transport-https gnupg lsb-release python3 python3-pip python-is-python3 libicu70
           wget -q https://github.com/cdxgen/cdxgen/releases/download/v12.1.1/cdxgen-linux-amd64 -O /bin/cdxgen
-          wget -q https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.30.0/cyclonedx-linux-x64 -O /bin/cyclonedx
+          # wget -q https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.30.0/cyclonedx-linux-x64 -O /bin/cyclonedx
           chmod +x /bin/cdxgen
-          chmod +x /bin/cyclonedx
+          # chmod +x /bin/cyclonedx
         
       - name: Checkout repository
         uses: actions/checkout@v4 
@@ -35,23 +36,13 @@ jobs:
           path: /tmp/cdxgen.json
           retention-days: 30 
 
-      - name: Convert cdx to SPDX
-        run: |
-          cyclonedx convert --input-file /tmp/cdxgen.json --output-file /tmp/cdxgen.spdx.json --input-format json --output-format spdxjson
-
-      - name: Upload spdx SBOM to Dependency Graph
-        uses: jonathborg/spdx-to-dependency-graph-action@v1.0.0
-        with:
-          filePath: "/tmp/cdxgen.spdx.json"
-      
   trivy:
-    if: false
     runs-on: ubuntu-latest
     container:
       image: ubuntu:24.04 
       
     steps:
-      - name: Install packages & cdxgen
+      - name: Install packages & trivy
         run: |
           apt-get update
           apt-get install -y wget apt-transport-https gnupg lsb-release
@@ -66,13 +57,20 @@ jobs:
       - name: Trivy
         run: |
           trivy fs --detection-priority comprehensive --format cyclonedx --output /tmp/sbom.json "$GITHUB_WORKSPACE"
+          trivy fs --detection-priority comprehensive --format sarif --output /tmp/trivy.sarif "$GITHUB_WORKSPACE"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: trivy-sbom
           path: /tmp/sbom.json
-          retention-days: 30 
+          retention-days: 30
+            
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: '/tmp/trivy.sarif'
       
   gitleaks:
     if: false
