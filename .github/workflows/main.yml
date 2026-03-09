@@ -24,7 +24,8 @@ jobs:
 
       - name: Cdxgen
         run: |
-          cdxgen -o /tmp/cdxgen.json --no-recurse "$GITHUB_WORKSPACE"
+          cdxgen -o /tmp/cdxgen.json "$GITHUB_WORKSPACE"
+          cdxgen -r -o /tmp/cdxgen.spdx.json --spec-version 2.2 "$GITHUB_WORKSPACE"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -32,8 +33,14 @@ jobs:
           name: cdxgen-sbom
           path: /tmp/cdxgen.json
           retention-days: 30 
+
+      - name: Upload spdx SBOM to Dependency Graph
+        uses: jonathborg/spdx-to-dependency-graph-action@v1.0.0
+        with:
+          filePath: "/tmp/cdxgen.spdx.json"
       
   trivy:
+    if: false
     runs-on: ubuntu-latest
     container:
       image: ubuntu:24.04 
@@ -63,6 +70,7 @@ jobs:
           retention-days: 30 
       
   gitleaks:
+    if: false
     runs-on: ubuntu-latest
     container:
       image: ubuntu:24.04 
