@@ -7,7 +7,6 @@ on:
       - master
 jobs:
   cdxgen:
-    if: false
     runs-on: ubuntu-latest
     container:
       image: ubuntu:24.04 
@@ -16,11 +15,9 @@ jobs:
       - name: Install packages & cdxgen
         run: |
           apt-get update
-          apt-get install -y wget apt-transport-https gnupg lsb-release python3 python3-pip python-is-python3 libicu70
+          apt-get install -y wget apt-transport-https gnupg lsb-release python3 python3-pip python-is-python3
           wget -q https://github.com/cdxgen/cdxgen/releases/download/v12.1.1/cdxgen-linux-amd64 -O /bin/cdxgen
-          # wget -q https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.30.0/cyclonedx-linux-x64 -O /bin/cyclonedx
           chmod +x /bin/cdxgen
-          # chmod +x /bin/cyclonedx
         
       - name: Checkout repository
         uses: actions/checkout@v4 
@@ -67,13 +64,12 @@ jobs:
           retention-days: 30
             
       - name: Upload Trivy results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: '/tmp/trivy.sarif'
       
   gitleaks:
-    if: false
     runs-on: ubuntu-latest
     container:
       image: ubuntu:24.04 
@@ -99,9 +95,4 @@ jobs:
         with:
           name: gitleaks-sarif
           path: /tmp/gitleaks.json
-          retention-days: 30 
-      
-
-    
-
-    
+          retention-days: 30      
