@@ -15,17 +15,19 @@ jobs:
       - name: Install packages & cdxgen
         run: |
           apt-get update
-          apt-get install -y wget apt-transport-https gnupg lsb-release
+          apt-get install -y wget apt-transport-https gnupg lsb-release python3 python3-pip python-is-python3
+          python3 -m pip install --upgrade pip
           wget -q https://github.com/cdxgen/cdxgen/releases/download/v12.1.1/cdxgen-linux-amd64 -O /bin/cdxgen
+          wget -q https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.30.0/cyclonedx-linux-x64 -O /bin/cyclonedx
           chmod +x /bin/cdxgen
+          chmod +x /bin/cyclonedx
         
       - name: Checkout repository
         uses: actions/checkout@v4 
 
       - name: Cdxgen
         run: |
-          cdxgen -o /tmp/cdxgen.json "$GITHUB_WORKSPACE"
-          cdxgen -r -o /tmp/cdxgen.spdx.json --spec-version 2.2 "$GITHUB_WORKSPACE"
+          cdxgen -o /tmp/cdxgen.json "$GITHUB_WORKSPACE"          
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -33,6 +35,10 @@ jobs:
           name: cdxgen-sbom
           path: /tmp/cdxgen.json
           retention-days: 30 
+
+      - name: Convert cdx to SPDX
+        run: |
+          cyclonedx convert --input-file /tmp/cdxgen.json --output-file /tmp/cdxgen.spdx.json --input-format json --output-format spdxjson
 
       - name: Upload spdx SBOM to Dependency Graph
         uses: jonathborg/spdx-to-dependency-graph-action@v1.0.0
